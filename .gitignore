@@ -1,0 +1,12 @@
+gocq/data
+gocq/logs
+gocq/config.yml
+gocq/device.json
+
+*.idea
+
+__pycache__/
+
+py/logs/*
+
+test.py

@@ -1,0 +1,51 @@
+{
+    "openai": {
+        "api_key": [
+            "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"
+        ],
+        "img_size": "1024x1024"
+    },
+    "chatgpt": {
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.9,
+        "max_tokens": 3000,
+        "top_p": 1,
+        "echo": false,
+        "presence_penalty": 0,
+        "frequency_penalty": 0,
+        "preset": "人工智障GPT"
+    },
+    "new_bing": {
+        "cookie_path": "D:\\ADownloads\\QQBotAPI3.5\\py\\config\\cookies.json",
+        "conversation_style": "galileo"
+    },
+    "qq_bot": {
+        "qq_no": "2352745453",
+        "cqhttp_url": "http://127.0.0.1:5700",
+        "max_length": 9999,
+        "image_path": "../gocq/data/images",
+        "url": "https://lucent.blog/?p=151",
+        "voice_path": "D:/ADownloads/QQBotAPI3.5/gocq/data/voices",
+        "voice": "zh-CN-XiaoyiNeural",
+        "auto_confirm": false,
+        "admin_qq": "2023434536"
+    },
+    "text_to_image": {
+        "font_size": 30,
+        "width": 700,
+        "font_path": "fonts/sarasa-mono-sc-regular.ttf",
+        "offset_x": 50,
+        "offset_y": 50
+    },
+    "replicate": {
+        "api_token": "369f017b5d8cf5a15685d6a636a55de06bce2fd1",
+        "url": "https://lucent.blog/?p=183"
+    },
+    "": "您好，我是人工智能助手，如果您有任何问题，请随时告诉我，我将尽力回答。\n如果您需要重置我们的会话，请回复`重置会话`",
+    "语音开启": "语音回复已开启",
+    "语音关闭": "语音回复已关闭",
+    "重置会话": "会话已重置",
+    "指令说明": "指令如下(群内需@机器人)：\n1.[重置会话] 请发送 重置会话\n2.[设置人格] 请发送 设置人格+人格描述\n3.[重置人格] 请发送 重置人格\n4.[指令说明] 请发送 指令说明\n注意：\n重置会话不会清空人格,重置人格会重置会话!\n设置人格后人格将一直存在，除非重置人格或重启逻辑端!",
+    "/gpt": "已切换至ChatGPT",
+    "/newbing": "已切换至NewBing"
+}
