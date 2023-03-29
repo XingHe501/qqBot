@@ -13,9 +13,8 @@ class OPENAI:
 		self.CURRENT_KEY_INDEX:int = 0
 
 	def get_curren_key(self, index:int = None):
-		if index:
-			return self.API_KEY[index]
-		return self.CURRENT_KEY_INDEX
+		index = index or self.CURRENT_KEY_INDEX
+		return self.API_KEY[index]
 
 	def add_key_index(self):
 		self.CURRENT_KEY_INDEX += 1

@@ -73,8 +73,8 @@ class ConfigManager:
         file.write(f"\t\tself.{varName}:int = 0\n\n")
         # get_current_key
         file.write("\tdef get_curren_key(self, index:int = None):\n")
-        file.write("\t\tif index:\n\t\t\treturn self.API_KEY[index]\n")
-        file.write(f"\t\treturn self.{varName}\n")
+        file.write(f"\t\tindex = index or self.{varName}\n")
+        file.write("\t\treturn self.API_KEY[index]\n")
         file.write("\n")
         # add_key_index
         file.write(f"\tdef add_key_index(self):\n\t\tself.{varName} += 1\n")

@@ -55,7 +55,7 @@ class NewBing:
 def create_new_bing_instance(session_id: str) -> NewBing:
     session = {'id': session_id, 'bot': Chatbot(
         cookiePath=config.NEW_BING.COOKIE_PATH)}
-    return NewBing(session, config)
+    return NewBing(session)
 
 
 if __name__ == "__main__":

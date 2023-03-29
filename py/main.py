@@ -31,7 +31,7 @@ class ChatSession:
           向GPT or NewBing发送请求
         """
         msg = msg.strip()
-        if msg in config:
+        if msg in config.config_manager:
             if msg == '重置会话':
                 if self.session['new_bing']:
                     self.newbing.reset_chat()
@@ -99,6 +99,7 @@ def chatapi():
 @server.route('/credit_summary', methods=["GET"])
 def credit_summary():
     url = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
+    print(config.OPENAI.get_curren_key())
     res = requests.get(url, headers={
         "Authorization": f"Bearer " + config.OPENAI.get_curren_key()
     }, timeout=60).json()
@@ -194,7 +195,7 @@ def reset_chat():
 
 # 处理消息包括群组消息和私聊消息
 def process_message(message, chat_type, uid=None, gid=None):
-    ms = MessageSender(config)
+    ms = MessageSender()
     if chat_type == 'private':
         chatSession = get_chat_session(uid, chat_type)
         send_message = ms.send_private_message
@@ -255,7 +256,7 @@ def get_chat_session(session_id, chat_type=None) -> ChatSession:
         'msg': "",
         'send_voice': False,
         'new_bing': False
-    }, config)
+    })
     global_sessions[session_id] = session
     return session
 
