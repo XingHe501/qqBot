@@ -80,7 +80,7 @@ def index():
 
 
 # 测试接口，可以用来测试与ChatGPT的交互是否正常，用来排查问题
-@server.route('/chat', methods=['post'])
+@server.route('/chat', methods=["POST"])
 def chatapi():
     requestJson = request.get_data()
     if requestJson is None or requestJson == "" or requestJson == {}:
@@ -120,56 +120,56 @@ def get_message():
     data = request.get_json()
 
     # 处理私聊消息
-    if data["message_type"] == "private":
-        uid = data["sender"]["user_id"]
-        message = data["raw_message"]
+    if data['message_type'] == 'private':
+        uid = data['sender']['user_id']
+        message = data['raw_message']
         logger.info(f"收到私聊消息：\n{message}")
-        process_message(message, "private", uid, None)
+        process_message(message, 'private', uid, None)
 
     # 处理群消息
-    elif data["message_type"] == "group":
-        gid = data["group_id"]
-        uid = data["sender"]["user_id"]
-        message = data["raw_message"]
+    elif data['message_type'] == 'group':
+        gid = data['group_id']
+        uid = data['sender']['user_id']
+        message = data['raw_message']
         # 判断是否被@，如果被@才进行回复
-        if f"[CQ:at,qq={QQ_NO}]" in message:
-            message = message.replace(f"[CQ:at,qq={QQ_NO}]", "")
+        if f'[CQ:at,qq={QQ_NO}]' in message:
+            message = message.replace(f'[CQ:at,qq={QQ_NO}]', '')
             logger.info(f"收到群聊消息：\n{message}")
-            process_message(message, "group", uid, gid)
+            process_message(message, 'group', uid, gid)
 
-     # 处理请求消息
-    elif data["post_type"] == "request":
-        request_type = data["request_type"]
-        uid = data["user_id"]
-        flag = data["flag"]
-        comment = data.get("comment", "")
+        # 处理请求消息
+    elif data['post_type'] == 'request':
+        request_type = data['request_type']
+        uid = data['user_id']
+        flag = data['flag']
+        comment = data.get('comment', '')
         logger.info(f"收到请求消息：\n{data}")
         # 处理好友请求
-        if request_type == "friend":
+        if request_type == 'friend':
             logger.info(f"收到好友请求，请求者：{uid}，验证信息：{comment}")
             # 自动通过好友请求
             if QQ_AUTO_CONFIRM or str(uid) == QQ_ADMIN_QQ:
-                set_friend_add_request(flag, "true")
+                set_friend_add_request(flag, 'true')
             else:
-                logger.info("未配置自动通过好友请求或请求者非管理员，拒绝好友请求")
-                set_friend_add_request(flag, "false")
+                logger.info('未配置自动通过好友请求或请求者非管理员，拒绝好友请求')
+                set_friend_add_request(flag, 'false')
 
         # 处理群请求
-        elif request_type == "group":
-            sub_type = data["sub_type"]
-            gid = data["group_id"]
+        elif request_type == 'group':
+            sub_type = data['sub_type']
+            gid = data['group_id']
             logger.info(f"收到群请求，请求类型：{sub_type}，群号：{gid}")
             # 处理加群请求
-            if sub_type == "add":
-                logger.info("收到加群请求，不进行处理")
+            if sub_type == 'add':
+                logger.info('收到加群请求，不进行处理')
             # 处理邀请入群请求
-            elif sub_type == "invite":
+            elif sub_type == 'invite':
                 # 自动通过入群邀请
                 if QQ_AUTO_CONFIRM or uid == QQ_ADMIN_QQ:
-                    set_group_invite_request(flag, "true")
+                    set_group_invite_request(flag, 'true')
                 else:
-                    logger.info("未配置自动通过入群邀请或请求者非管理员，拒绝入群邀请")
-                    set_group_invite_request(flag, "false")
+                    logger.info('未配置自动通过入群邀请或请求者非管理员，拒绝入群邀请')
+                    set_group_invite_request(flag, 'false')
     return "ok"
 
 
