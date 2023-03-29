@@ -1,3 +1,9 @@
+from flask import request, Flask
+from stable_diffusion import get_stable_diffusion_img
+from message_sender import MessageSender
+from bot.new_bing import create_new_bing_instance
+from bot.gpt import create_chatgpt_instance, get_current_api_key_index
+from util.logs import create_logger
 import json
 import requests
 import openai
@@ -5,13 +11,6 @@ import sys
 
 sys.path.append("./util")
 sys.path.append("./bot")
-
-from util.logs import create_logger
-from bot.gpt import create_chatgpt_instance, get_current_api_key_index
-from bot.new_bing import create_new_bing_instance
-from message_sender import MessageSender
-from stable_diffusion import get_stable_diffusion_img
-from flask import request, Flask
 
 
 with open("./config/config.json", "r", encoding="utf-8") as jsonfile:
@@ -118,19 +117,21 @@ def credit_summary():
 @server.route('/', methods=["POST"])
 def get_message():
     data = request.get_json()
+    message_type = data.get('message_type')
+    post_type = data.get('post_type')
 
     # 处理私聊消息
-    if data['message_type'] == 'private':
-        uid = data['sender']['user_id']
-        message = data['raw_message']
+    if message_type == 'private':
+        uid = data.get('sender').get('user_id')
+        message = data('raw_message')
         logger.info(f"收到私聊消息：\n{message}")
         process_message(message, 'private', uid, None)
 
     # 处理群消息
-    elif data['message_type'] == 'group':
-        gid = data['group_id']
-        uid = data['sender']['user_id']
-        message = data['raw_message']
+    elif message_type == 'group':
+        gid = data.get('group_id')
+        uid = data.get('sender').get('user_id')
+        message = data.get('raw_message')
         # 判断是否被@，如果被@才进行回复
         if f'[CQ:at,qq={QQ_NO}]' in message:
             message = message.replace(f'[CQ:at,qq={QQ_NO}]', '')
@@ -138,11 +139,11 @@ def get_message():
             process_message(message, 'group', uid, gid)
 
         # 处理请求消息
-    elif data['post_type'] == 'request':
-        request_type = data['request_type']
-        uid = data['user_id']
-        flag = data['flag']
-        comment = data.get('comment', '')
+    elif post_type == 'request':
+        request_type = data.get('request_type')
+        uid = data.get('user_id')
+        flag = data.get('flag')
+        comment = data.get('comment')
         logger.info(f"收到请求消息：\n{data}")
         # 处理好友请求
         if request_type == 'friend':
@@ -156,8 +157,8 @@ def get_message():
 
         # 处理群请求
         elif request_type == 'group':
-            sub_type = data['sub_type']
-            gid = data['group_id']
+            sub_type = data.get('sub_type')
+            gid = data.get('group_id')
             logger.info(f"收到群请求，请求类型：{sub_type}，群号：{gid}")
             # 处理加群请求
             if sub_type == 'add':
