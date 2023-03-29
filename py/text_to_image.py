@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw, ImageFont
-from config.config import config
 import textwrap
 import itertools
 import unicodedata
@@ -13,16 +12,17 @@ default_settings = {
     "offset_x": 50,
     "offset_y": 50
 }
+with open("./config/config.json", "r", encoding='utf-8') as jsonfile:
+    config_data = json.load(jsonfile)
 
-config_data = config
-if not hasattr(config_data, "text_to_image"):
-    config_data["text_to_image"] = {}
-config_data = config_data["text_to_image"]
+    if not hasattr(config_data, "text_to_image"):
+        config_data["text_to_image"] = {}
+    config_data = config_data["text_to_image"]
 
-# Copy defaults
-for key in default_settings:
-    if not hasattr(config_data, key):
-        config_data[key] = default_settings[key]
+    # Copy defaults
+    for key in default_settings:
+        if not hasattr(config_data, key):
+            config_data[key] = default_settings[key]
 
 
 class TextWrapper(textwrap.TextWrapper):
@@ -227,8 +227,7 @@ def text_to_image(text, width=config_data["width"], font_name=config_data["font_
     height = int(height)
 
     # Create a new image with the calculated height and the specified width
-    image = Image.new('RGB', (width + offset_x * 2,
-                      height + offset_y), color='white')
+    image = Image.new('RGB', (width + offset_x * 2, height + offset_y), color='white')
 
     # Create a draw object that can be used to draw on the image
     draw = ImageDraw.Draw(image)
@@ -237,7 +236,6 @@ def text_to_image(text, width=config_data["width"], font_name=config_data["font_
     font = ImageFont.truetype(font_name, font_size)
 
     # Draw the wrapped text on the image
-    draw.text((offset_x, offset_y), '\n'.join(
-        wrapped_text), font=font, fill='black')
+    draw.text((offset_x, offset_y), '\n'.join(wrapped_text), font=font, fill='black')
 
     return image
