@@ -13,3 +13,6 @@ test.py
 
 config.json
 cookies.json
+
+.vscode
+.idea

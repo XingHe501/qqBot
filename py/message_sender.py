@@ -7,6 +7,7 @@ import asyncio
 from text_to_image import text_to_image
 from text_to_speech import gen_speech
 from util.logs import create_logger
+from py.config.config import config
 
 
 class MessageData:
@@ -16,10 +17,7 @@ class MessageData:
 
 
 class MessageSender:
-    def __init__(self, config_data) -> None:
-        """
-        config_data: config.json
-        """
+    def __init__(self) -> None:
         self.config = config_data
         self.CQHTTP_URL = config_data['qq_bot']['cqhttp_url']
         self.MAX_MSG_LENGTH = config_data['qq_bot']['max_length']
@@ -34,7 +32,7 @@ class MessageSender:
         return MessageData(self.CQHTTP_URL + req, msg)
 
     def __create_logger(self):
-        return create_logger(__class__.__name__, self.config)
+        return create_logger()
 
     def __generate_image(self, message):
         """生成图片并返回图片文件名"""

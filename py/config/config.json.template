@@ -1,7 +1,10 @@
 {
     "openai": {
-        "api_key": ["openai的API key"],
-        "img_size": "1024x1024"
+        "api_key": [
+            "openai的API key"
+        ],
+        "img_size": "1024x1024",
+        "api_base": "https://chat-gpt.aurorax.cloud/v1"
     },
     "chatgpt": {
         "model": "gpt-3.5-turbo",
@@ -35,7 +38,7 @@
         "offset_y": 50
     },
     "replicate": {
-        "api_token": "Replicate Token",
+        "api_token": "Replicate Token"
     },
     "": "您好，我是人工智能助手，如果您有任何问题，请随时告诉我，我将尽力回答。\n如果您需要重置我们的会话，请回复`重置会话`",
     "语音开启": "语音回复已开启",

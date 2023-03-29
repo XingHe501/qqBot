@@ -1,43 +1,30 @@
+import config.export_class
+from config.config import config
 from flask import request, Flask
 from stable_diffusion import get_stable_diffusion_img
 from message_sender import MessageSender
 from bot.new_bing import create_new_bing_instance
-from bot.gpt import create_chatgpt_instance, get_current_api_key_index
+from bot.gpt import create_chatgpt_instance
 from util.logs import create_logger
 import json
 import requests
 import openai
-import sys
-
-sys.path.append("./util")
-sys.path.append("./bot")
-
-
-with open("./config/config.json", "r", encoding="utf-8") as jsonfile:
-    config = json.load(jsonfile)
-QQ_NO = config['qq_bot']['qq_no']
-QQ_AUTO_CONFIRM = config['qq_bot']['auto_confirm']
-QQ_ADMIN_QQ = config['qq_bot']['admin_qq']
-QQ_CQHTTP_URL = config['qq_bot']['cqhttp_url']
-REPLICATE_API_TOKEN = config['replicate']['api_token']
 
 # 全局的所有session都在这里
 global_sessions = {}
-logger = create_logger("Main", config)
+logger = create_logger()
 # OpenAI API Base
-openai.api_base = "https://chat-gpt.aurorax.cloud/v1"
-# 查询账单url
-CREDIT_GRANTS_URL = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
+openai.api_base = config.OPENAI.API_BASE
 
 
 class ChatSession:
-    def __init__(self, session, config) -> None:
+    def __init__(self, session) -> None:
         """
         session: {'id': str, 'msg':"", 'send_voice':bool, 'new_bing':bool}
         """
         self.session = session
-        self.chatgpt = create_chatgpt_instance(session['id'], config)
-        self.newbing = create_new_bing_instance(session['id'], config)
+        self.chatgpt = create_chatgpt_instance(session['id'])
+        self.newbing = create_new_bing_instance(session['id'])
 
     def request(self, msg: str):
         """
@@ -59,13 +46,18 @@ class ChatSession:
             elif msg == '语音关闭':
                 self.session['send_voice'] = False
             return self.config[msg]
-        return self.newbing.chat(msg) if self.session['new_bing'] else self.chatgpt.chat(msg)
+        if msg.startswith("newbing ") or self.session['new_bing']:
+            return self.request_newbing(msg.replace('newbing', ''))
+        return self.request_chatgpt(msg.replace('chat', ''))
 
     def request_chatgpt(self, msg):
         return self.chatgpt.chat(msg)
 
     def generate_image(self, msg):
         return self.chatgpt.generate_img(msg)
+
+    def request_newbing(self, msg):
+        return self.newbing.chat(msg)
 
 
 # 创建一个服务，把当前这个python文件当做一个服务
@@ -108,7 +100,7 @@ def chatapi():
 def credit_summary():
     url = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
     res = requests.get(url, headers={
-        "Authorization": f"Bearer " + config['openai']['api_key'][get_current_api_key_index()]
+        "Authorization": f"Bearer " + config.OPENAI.get_curren_key()
     }, timeout=60).json()
     return res
 
@@ -130,17 +122,23 @@ def get_message():
 
     # 处理群消息
     elif message_type == 'group':
+        QQ_NO = config.QQ_BOT.QQ_NO
         gid = data.get('group_id')
         uid = data.get('sender').get('user_id')
-        message = data.get('raw_message')
+        message = str(data.get('raw_message'))
         # 判断是否被@，如果被@才进行回复
         if f'[CQ:at,qq={QQ_NO}]' in message:
             message = message.replace(f'[CQ:at,qq={QQ_NO}]', '')
             logger.info(f"收到群聊消息：\n{message}")
             process_message(message, 'group', uid, gid)
+        elif message.startswith("chat ") or message.startswith("newbing "):
+            # 向newbing or chat 发消息
+            process_message(message, 'group', uid, gid)
 
         # 处理请求消息
     elif post_type == 'request':
+        QQ_AUTO_CONFIRM = config.QQ_BOT.AUTO_CONFIRM
+        QQ_ADMIN_QQ = config.QQ_BOT.ADMIN_QQ
         request_type = data.get('request_type')
         uid = data.get('user_id')
         flag = data.get('flag')
@@ -161,11 +159,11 @@ def get_message():
             sub_type = data.get('sub_type')
             gid = data.get('group_id')
             logger.info(f"收到群请求，请求类型：{sub_type}，群号：{gid}")
-            # 处理加群请求
-            if sub_type == 'add':
-                logger.info('收到加群请求，不进行处理')
+            # # 处理加群请求
+            # if sub_type == 'add':
+            #     logger.info('收到加群请求，不进行处理')
             # 处理邀请入群请求
-            elif sub_type == 'invite':
+            if sub_type == 'invite':
                 # 自动通过入群邀请
                 if QQ_AUTO_CONFIRM or uid == QQ_ADMIN_QQ:
                     set_group_invite_request(flag, 'true')
@@ -232,8 +230,6 @@ def process_message(message, chat_type, uid=None, gid=None):
                 uid=uid, msg=errorMsgText)
         logger.info("stable-diffusion 生成图像: {}".format(pic_path))
     else:
-        # 下面你可以执行更多逻辑，这里只演示与ChatGPT对话
-        # 获得对话session
         send_voice = chatSession.session['send_voice']
         msg_text = chatSession.request(message)
     send_message(gid, uid, msg_text, send_voice, pic_path) if chat_type == 'group' else send_message(
@@ -267,7 +263,7 @@ def get_chat_session(session_id, chat_type=None) -> ChatSession:
 # 处理好友请求
 def set_friend_add_request(flag, approve):
     try:
-        requests.post(url=QQ_CQHTTP_URL + "/set_friend_add_request",
+        requests.post(url=config.QQ_BOT.CQHTTP_URL + "/set_friend_add_request",
                       params={'flag': flag, 'approve': approve})
         logger.info("处理好友申请成功")
     except:
@@ -277,7 +273,7 @@ def set_friend_add_request(flag, approve):
 # 处理邀请加群请求
 def set_group_invite_request(flag, approve):
     try:
-        requests.post(url=QQ_CQHTTP_URL + "/set_group_add_request",
+        requests.post(url=config.QQ_BOT.CQHTTP_URL + "/set_group_add_request",
                       params={'flag': flag, 'sub_type': 'invite', 'approve': approve})
         logger.info("处理群申请成功")
     except:
@@ -291,7 +287,7 @@ def sd_img(msg):
         "image_dimensions": "768x768",
         "negative_prompt": "",
         "scheduler": "K_EULER"
-    }, REPLICATE_API_TOKEN)
+    }, config.REPLICATE.API_TOKEN)
     return res[0]
 
 

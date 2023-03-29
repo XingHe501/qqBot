@@ -7,6 +7,7 @@ import traceback
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import tiktoken
+from config.config import config
 
 
 session_config = {
@@ -19,26 +20,16 @@ session_config = {
 # 查询账单url
 CREDIT_GRANTS_URL = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
 # 当前API Key的索引
-current_key_index = 0
+CURRENT_KEY_INDEX = 0
 
 
 class ChatGPT:
-    OPENAI_API_KEY = None
-    CHATGPT_MODEL = None
-
-    def __init__(self, session, config) -> None:
+    def __init__(self, session) -> None:
         """
         session: {'id': str, 'msg': list, 'send_voice': bool, 'new_bing': bool}
-        config: config.json
         """
-        self.config = config
         self.session = session
-        self.logger = create_logger(__class__.__name__, config)
-
-        if not ChatGPT.OPENAI_API_KEY:
-            ChatGPT.OPENAI_API_KEY = self.config['openai']['api_key']
-        if not ChatGPT.CHATGPT_MODEL:
-            ChatGPT.CHATGPT_MODEL = self.config['chatgpt']['model']
+        self.logger = create_logger()
 
     # 重置会话，但是保留人格
     def reset_chat(self):
@@ -49,11 +40,11 @@ class ChatGPT:
         try:
             if msg == '查询余额':
                 balances = [
-                    f"Key_{i+1} 余额: {round(self.__get_credit_summary(i), 2)}美元" for i in range(len(ChatGPT.OPENAI_API_KEY))]
+                    f"Key_{i+1} 余额: {round(self.__get_credit_summary(i), 2)}美元" for i in range(len(config.OPENAI.API_KEY))]
                 text = "\n".join(balances)
                 return text
             if msg.startswith('/img'):
-                pic_path = self.__generate_img(msg.replace('/img', ''))
+                pic_path = self.generate_img(msg.replace('/img', ''))
                 self.logger.info(f'开始直接生成图像: {pic_path}')
                 return "![](" + pic_path + ")"
 
@@ -63,7 +54,7 @@ class ChatGPT:
             self.session['msg'][1] = {"role": "system",
                                       "content": "current time is:" + get_bj_time()}
             # 检查是否超过tokens限制
-            while self.__calculate_num_tokens() > ChatGPT.CHATGPT_MAX_TOKENS:
+            while self.__calculate_num_tokens() > config.CHATGPT.MAX_TOKENS:
                 # 当超过记忆保存最大量时，清理一条
                 del self.session['msg'][2:3]
             # 与ChatGPT交互获得对话内容
@@ -77,11 +68,11 @@ class ChatGPT:
 
     # 使用openai生成图片
     def generate_img(self, desc: str) -> str:
-        openai.api_key = self.config['openai']['api_key'][current_key_index]
+        openai.api_key = config.OPENAI.get_curren_key()
         response = openai.Image.create(
             prompt=desc,
             n=1,
-            size=self.config['openai']['img_size']
+            size=config.OPENAI.IMG_SIZE
         )
         image_url = response['data'][0]['url']
         self.logger.info(f"图像已生成：{image_url}")
@@ -108,29 +99,26 @@ class ChatGPT:
 
     # 查询余额
     def __get_credit_summary(self, index=None):
-        index = index or current_key_index
         res = requests.get(CREDIT_GRANTS_URL, headers={
-            "Authorization": f"Bearer " + self.config['openai']['api_key'][index]
+            "Authorization": f"Bearer " + config.OPENAI.get_curren_key(index)
         }, timeout=60).json()
         self.logger.info(f"credit summary: {res}")
         return res['total_available'] if index else res
 
     # 向openai的api发送请求
     def __asking_gpt(self):
-        OPENAI_API_KEY = self.config['openai']['api_key']
-        CHATGPT_MODEL = self.config['chatgpt']['model']
-        max_length = len(OPENAI_API_KEY) - 1
+        max_length = len(config.OPENAI.API_KEY) - 1
         try:
-            if not OPENAI_API_KEY:
+            if not config.OPENAI.API_KEY:
                 return "请设置Api Key"
             else:
-                if current_key_index > max_length:
-                    current_key_index = 0
+                if config.OPENAI.CURRENT_KEY_INDEX > max_length:
+                    config.OPENAI.reset_key_index()
                     return "全部Key均已达到速率限制,请等待一分钟后再尝试"
-                openai.api_key = OPENAI_API_KEY[current_key_index]
+                openai.api_key = config.OPENAI.get_curren_key()
 
             resp = openai.ChatCompletion.create(
-                model=CHATGPT_MODEL,
+                model=config.CHATGPT.MODEL,
                 messages=self.session['msg']
             )
             resp = resp['choices'][0]['message']['content']
@@ -140,19 +128,19 @@ class ChatGPT:
 
     # 处理error
     def __handle_error(self, error):
-        if "Rate limit reached" in str(error) and current_key_index < len(ChatGPT.OPENAI_API_KEY) - 1:
+        if "Rate limit reached" in str(error) and config.OPENAI.CURRENT_KEY_INDEX < len(config.OPENAI.API_KEY) - 1:
             # 切换key
-            current_key_index += 1
+            config.OPENAI.add_key_index()
             self.logger.error(
-                f"速率限制，尝试切换key：{ChatGPT.OPENAI_API_KEY[current_key_index]}")
+                f"速率限制，尝试切换key：{config.OPENAI.get_curren_key()}")
             return self.__asking_gpt()
-        elif "Your access was terminated" in str(error) and current_key_index < len(ChatGPT.OPENAI_API_KEY) - 1:
+        elif "Your access was terminated" in str(error) and config.OPENAI.CURRENT_KEY_INDEX < len(config.OPENAI.API_KEY) - 1:
             self.logger.error(
-                f"请及时确认该Key: {ChatGPT.OPENAI_API_KEY[current_key_index]}是否正常，若异常，请移除")
+                f"请及时确认该Key: {config.OPENAI.get_curren_key()}是否正常，若异常，请移除")
             # 切换key
-            current_key_index += 1
+            config.OPENAI.add_key_index()
             self.logger.error(
-                f"访问被阻止，尝试切换key：{ChatGPT.OPENAI_API_KEY[current_key_index]}")
+                f"访问被阻止，尝试切换key：{config.OPENAI.get_curren_key()}")
             return self.__asking_gpt()
         else:
             self.logger.error(f'openai 接口报错: {error}')
@@ -160,23 +148,19 @@ class ChatGPT:
 
     # 上报日志
     def __up_log(self, e: Exception):
-        self.logger.error(f"New Bing接口报错: {str(e)}")
+        self.logger.error(f"GPT接口报错: {str(e)}")
         self.logger.error(f"traceback: {traceback.format_exc()}")
-        return "New Bing接口报错: " + str(e)
+        return "GPT接口报错: " + str(e)
 
 
 # 创建一个chatgpt实例
-def create_chatgpt_instance(session_id: str, config: any) -> ChatGPT:
+def create_chatgpt_instance(session_id: str) -> ChatGPT:
     session = deepcopy(session_config)
     session['id'] = session_id
     session['msg'].append(
         {"role": "system", "content": "current time is:" + get_bj_time()}
     )
-    return ChatGPT(session, config)
-
-#获取当前APIKeyIndex
-def get_current_api_key_index():
-    return current_key_index
+    return ChatGPT(session)
 
 # 获取北京时间
 def get_bj_time():
