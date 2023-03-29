@@ -33,7 +33,7 @@ class ChatGPT:
         """
         self.config = config
         self.session = session
-        self.logger = create_logger(__class__.__name__)
+        self.logger = create_logger(__class__.__name__, config)
 
         if not ChatGPT.OPENAI_API_KEY:
             ChatGPT.OPENAI_API_KEY = self.config['openai']['api_key']

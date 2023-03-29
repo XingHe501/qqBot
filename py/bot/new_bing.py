@@ -18,7 +18,7 @@ class NewBing:
         self.config = config
         self.session = session
         self.bot = session['bot']  # ChatBot
-        self.logger = create_logger(__class__.__name__)
+        self.logger = create_logger(__class__.__name__, config)
 
     # 重置会话
     def reset_chat(self):

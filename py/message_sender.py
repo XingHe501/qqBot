@@ -20,7 +20,7 @@ class MessageSender:
         """
         config_data: config.json
         """
-        self.config_data = config_data
+        self.config = config_data
         self.CQHTTP_URL = config_data['qq_bot']['cqhttp_url']
         self.MAX_MSG_LENGTH = config_data['qq_bot']['max_length']
         self.IMAGE_PATH = config_data['qq_bot']['image_path']
@@ -34,7 +34,7 @@ class MessageSender:
         return MessageData(self.CQHTTP_URL + req, msg)
 
     def __create_logger(self):
-        return create_logger(__class__.__name__)
+        return create_logger(__class__.__name__, self.config)
 
     def __generate_image(self, message):
         """生成图片并返回图片文件名"""
@@ -52,7 +52,7 @@ class MessageSender:
             message = params['message']
             if send_voice:  # 如果开启了语音发送
                 voice_path = asyncio.run(
-                    gen_speech(message, self.VOICE, self.config_data['qq_bot']['voice_path']))
+                    gen_speech(message, self.VOICE, self.config['qq_bot']['voice_path']))
                 message = "[CQ:record,file=file://" + voice_path + "]"
             if len(message) >= self.MAX_MSG_LENGTH and not send_voice:
                 pic_path = self.__generate_image(message)

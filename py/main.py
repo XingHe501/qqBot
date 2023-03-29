@@ -14,16 +14,16 @@ sys.path.append("./bot")
 
 
 with open("./config/config.json", "r", encoding="utf-8") as jsonfile:
-    config_data = json.load(jsonfile)
-QQ_NO = config_data['qq_bot']['qq_no']
-QQ_AUTO_CONFIRM = config_data['qq_bot']['auto_confirm']
-QQ_ADMIN_QQ = config_data['qq_bot']['admin_qq']
-QQ_CQHTTP_URL = config_data['qq_bot']['cqhttp_url']
-REPLICATE_API_TOKEN = config_data['replicate']['api_token']
+    config = json.load(jsonfile)
+QQ_NO = config['qq_bot']['qq_no']
+QQ_AUTO_CONFIRM = config['qq_bot']['auto_confirm']
+QQ_ADMIN_QQ = config['qq_bot']['admin_qq']
+QQ_CQHTTP_URL = config['qq_bot']['cqhttp_url']
+REPLICATE_API_TOKEN = config['replicate']['api_token']
 
 # 全局的所有session都在这里
 global_sessions = {}
-logger = create_logger("Main")
+logger = create_logger("Main", config)
 # OpenAI API Base
 openai.api_base = "https://chat-gpt.aurorax.cloud/v1"
 # 查询账单url
@@ -44,7 +44,7 @@ class ChatSession:
           向GPT or NewBing发送请求
         """
         msg = msg.strip()
-        if msg in config_data:
+        if msg in config:
             if msg == '重置会话':
                 if self.session['new_bing']:
                     self.newbing.reset_chat()
@@ -108,7 +108,7 @@ def chatapi():
 def credit_summary():
     url = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
     res = requests.get(url, headers={
-        "Authorization": f"Bearer " + config_data['openai']['api_key'][get_current_api_key_index()]
+        "Authorization": f"Bearer " + config['openai']['api_key'][get_current_api_key_index()]
     }, timeout=60).json()
     return res
 
@@ -117,13 +117,14 @@ def credit_summary():
 @server.route('/', methods=["POST"])
 def get_message():
     data = request.get_json()
+    logger.info(f"request data: {data}")
     message_type = data.get('message_type')
     post_type = data.get('post_type')
 
     # 处理私聊消息
     if message_type == 'private':
         uid = data.get('sender').get('user_id')
-        message = data('raw_message')
+        message = data.get('raw_message')
         logger.info(f"收到私聊消息：\n{message}")
         process_message(message, 'private', uid, None)
 
@@ -195,7 +196,7 @@ def reset_chat():
 
 # 处理消息包括群组消息和私聊消息
 def process_message(message, chat_type, uid=None, gid=None):
-    ms = MessageSender(config_data)
+    ms = MessageSender(config)
     if chat_type == 'private':
         chatSession = get_chat_session(uid, chat_type)
         send_message = ms.send_private_message
@@ -258,7 +259,7 @@ def get_chat_session(session_id, chat_type=None) -> ChatSession:
         'msg': "",
         'send_voice': False,
         'new_bing': False
-    }, config_data)
+    }, config)
     global_sessions[session_id] = session
     return session
 

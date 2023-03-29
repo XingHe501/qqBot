@@ -7,6 +7,9 @@ gocq/device.json
 
 __pycache__/
 
-py/logs/*
+logs/*
 
 test.py
+
+config.json
+cookies.json
