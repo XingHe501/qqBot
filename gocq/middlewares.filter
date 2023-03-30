@@ -5,20 +5,21 @@
         },
         {
             "message_type": "group",
-            "group_id": {
-                ".in": [
-                    123456
-                ]
-            },
-
             "anonymous": {
                 ".eq": null
+            },
+            "raw_message":{
+                ".regex":"^(chat|newbing)\s.*"
             }
         },
         {
+            "message_type": "group",
+            "anonymous": {
+                ".eq": null
+            },
             "raw_message":{
-                ".regex":"^(chat\s|newbing\s|[CQ:at,qq=23527454543]).*"
+                ".regex":"^[CQ:at,qq=23527454543].*"
             }
-        }
+        },
     ]
 }

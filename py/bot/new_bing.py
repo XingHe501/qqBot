@@ -22,7 +22,7 @@ class NewBing:
     async def chat(self, msg: str):
         try:
             logger.info(f"问: {msg}")
-            replay = self.__ask_newbing(msg)
+            replay = await self.__ask_newbing(msg)
             logger.info(f"New Bing 返回: {replay}")
             return replay
         except Exception as e:
