@@ -19,10 +19,10 @@ class NewBing:
     def reset_chat(self):
         self.bot.reset()
 
-    def chat(self, msg: str):
+    async def chat(self, msg: str):
         try:
             logger.info(f"问: {msg}")
-            replay = asyncio.run(self.__ask_newbing(msg))
+            replay = self.__ask_newbing(msg)
             logger.info(f"New Bing 返回: {replay}")
             return replay
         except Exception as e:

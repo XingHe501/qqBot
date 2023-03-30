@@ -10,6 +10,7 @@ __pycache__/
 logs/*
 
 test.py
+server.py
 
 config.json
 cookies.json

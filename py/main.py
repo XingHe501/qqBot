@@ -48,7 +48,7 @@ class ChatSession:
                 self.session['send_voice'] = False
             return config.get_config(msg)
         if msg.startswith("newbing ") or self.session['new_bing']:
-            return self.request_newbing(msg.replace('newbing ', ''))
+            return await self.request_newbing(msg.replace('newbing ', ''))
         return await self.request_chatgpt(msg.replace('chat ', ''))
 
     def request_chatgpt(self, msg):
