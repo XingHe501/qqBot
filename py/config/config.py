@@ -5,7 +5,7 @@ CONFIG_FILE = "./config/config.json"
 
 class OPENAI: 
 	def __init__(self, config):
-		"""		config: config['OPENAI']
+		"""		config: config.json['openai']
 		"""
 		self.API_KEY: list = config['api_key']
 		self.IMG_SIZE: str = config['img_size']
@@ -26,7 +26,7 @@ class OPENAI:
 
 class CHATGPT: 
 	def __init__(self, config):
-		"""		config: config['CHATGPT']
+		"""		config: config.json['chatgpt']
 		"""
 		self.MODEL: str = config['model']
 		self.TEMPERATURE: float = config['temperature']
@@ -40,7 +40,7 @@ class CHATGPT:
 
 class NEW_BING: 
 	def __init__(self, config):
-		"""		config: config['NEW_BING']
+		"""		config: config.json['new_bing']
 		"""
 		self.COOKIE_PATH: str = config['cookie_path']
 		self.CONVERSATION_STYLE: str = config['conversation_style']
@@ -48,12 +48,13 @@ class NEW_BING:
 
 class QQ_BOT: 
 	def __init__(self, config):
-		"""		config: config['QQ_BOT']
+		"""		config: config.json['qq_bot']
 		"""
 		self.QQ_NO: str = config['qq_no']
 		self.CQHTTP_URL: str = config['cqhttp_url']
 		self.MAX_LENGTH: int = config['max_length']
 		self.IMAGE_PATH: str = config['image_path']
+		self.URL: str = config['url']
 		self.VOICE_PATH: str = config['voice_path']
 		self.VOICE: str = config['voice']
 		self.AUTO_CONFIRM: bool = config['auto_confirm']
@@ -62,7 +63,7 @@ class QQ_BOT:
 
 class TEXT_TO_IMAGE: 
 	def __init__(self, config):
-		"""		config: config['TEXT_TO_IMAGE']
+		"""		config: config.json['text_to_image']
 		"""
 		self.FONT_SIZE: int = config['font_size']
 		self.WIDTH: int = config['width']
@@ -73,7 +74,7 @@ class TEXT_TO_IMAGE:
 
 class REPLICATE: 
 	def __init__(self, config):
-		"""		config: config['REPLICATE']
+		"""		config: config.json['replicate']
 		"""
 		self.API_TOKEN: str = config['api_token']
 

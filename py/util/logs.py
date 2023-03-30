@@ -42,3 +42,5 @@ if __name__ == "__main__":
     msg = "!23"
     log.info(f"msg:{msg}")
     log.error(f"发生错误： Error")
+
+logger = create_logger()

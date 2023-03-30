@@ -1,3 +1,4 @@
+import asyncio
 import config.export_class
 from config.config import config
 from flask import request, Flask
@@ -5,14 +6,13 @@ from stable_diffusion import get_stable_diffusion_img
 from message_sender import MessageSender
 from bot.new_bing import create_new_bing_instance
 from bot.gpt import create_chatgpt_instance
-from util.logs import create_logger
+from util.logs import logger
 import json
 import requests
 import openai
 
 # 全局的所有session都在这里
 global_sessions = {}
-logger = create_logger()
 # OpenAI API Base
 openai.api_base = config.OPENAI.API_BASE
 
@@ -24,9 +24,9 @@ class ChatSession:
         """
         self.session = session
         self.chatgpt = create_chatgpt_instance(session['id'])
-        self.newbing = create_new_bing_instance(session['id'])
+        self.newbing = None
 
-    def request(self, msg: str):
+    async def request(self, msg: str):
         """
           向GPT or NewBing发送请求
         """
@@ -41,14 +41,15 @@ class ChatSession:
                 self.session['new_bing'] = False
             elif msg == '/newbing':
                 self.session['new_bing'] = True
+                self.__check_newbing()
             elif msg == '语音开启':
                 self.session['send_voice'] = True
             elif msg == '语音关闭':
                 self.session['send_voice'] = False
-            return self.config[msg]
+            return config.get_config(msg)
         if msg.startswith("newbing ") or self.session['new_bing']:
             return self.request_newbing(msg.replace('newbing ', ''))
-        return self.request_chatgpt(msg.replace('chat ', ''))
+        return await self.request_chatgpt(msg.replace('chat ', ''))
 
     def request_chatgpt(self, msg):
         return self.chatgpt.chat(msg)
@@ -57,7 +58,12 @@ class ChatSession:
         return self.chatgpt.generate_img(msg)
 
     def request_newbing(self, msg):
+        self.__check_newbing()
         return self.newbing.chat(msg)
+
+    def __check_newbing(self):
+        if self.newbing == None:
+            self.newbing = create_new_bing_instance(self.session['id'])
 
 
 # 创建一个服务，把当前这个python文件当做一个服务
@@ -109,24 +115,28 @@ def credit_summary():
 # qq消息上报接口，qq机器人监听到的消息内容将被上报到这里
 @server.route('/', methods=["POST"])
 def get_message():
-    data = request.get_json()
-    logger.info(f"request data: {data}")
-    message_type = data.get('message_type')
-    post_type = data.get('post_type')
+    request_data = request.get_json()
+    if request_data.get('post_type') == 'meta_event' and request_data.get('meta_event_type') == 'heartbeat':
+        # 心跳包，直接返回
+        return "ok"
+
+    logger.info(f"request data: {request_data}")
+    message_type = request_data.get('message_type')
+    post_type = request_data.get('post_type')
 
     # 处理私聊消息
     if message_type == 'private':
-        uid = data.get('sender').get('user_id')
-        message = data.get('raw_message')
+        uid = request_data.get('sender').get('user_id')
+        message = request_data.get('raw_message')
         logger.info(f"收到私聊消息：\n{message}")
         process_message(message, 'private', uid, None)
 
     # 处理群消息
     elif message_type == 'group':
         QQ_NO = config.QQ_BOT.QQ_NO
-        gid = data.get('group_id')
-        uid = data.get('sender').get('user_id')
-        message = str(data.get('raw_message'))
+        gid = request_data.get('group_id')
+        uid = request_data.get('sender').get('user_id')
+        message = str(request_data.get('raw_message'))
         # 判断是否被@，如果被@才进行回复
         if f'[CQ:at,qq={QQ_NO}]' in message:
             message = message.replace(f'[CQ:at,qq={QQ_NO}]', '')
@@ -140,11 +150,11 @@ def get_message():
     elif post_type == 'request':
         QQ_AUTO_CONFIRM = config.QQ_BOT.AUTO_CONFIRM
         QQ_ADMIN_QQ = config.QQ_BOT.ADMIN_QQ
-        request_type = data.get('request_type')
-        uid = data.get('user_id')
-        flag = data.get('flag')
-        comment = data.get('comment')
-        logger.info(f"收到请求消息：\n{data}")
+        request_type = request_data.get('request_type')
+        uid = request_data.get('user_id')
+        flag = request_data.get('flag')
+        comment = request_data.get('comment')
+        logger.info(f"收到请求消息：\n{request_data}")
         # 处理好友请求
         if request_type == 'friend':
             logger.info(f"收到好友请求，请求者：{uid}，验证信息：{comment}")
@@ -157,8 +167,8 @@ def get_message():
 
         # 处理群请求
         elif request_type == 'group':
-            sub_type = data.get('sub_type')
-            gid = data.get('group_id')
+            sub_type = request_data.get('sub_type')
+            gid = request_data.get('group_id')
             logger.info(f"收到群请求，请求类型：{sub_type}，群号：{gid}")
             # # 处理加群请求
             # if sub_type == 'add':
@@ -232,7 +242,7 @@ def process_message(message, chat_type, uid=None, gid=None):
         logger.info("stable-diffusion 生成图像: {}".format(pic_path))
     else:
         send_voice = chatSession.session['send_voice']
-        msg_text = chatSession.request(message)
+        msg_text = asyncio.run(chatSession.request(message))
     send_message(gid, uid, msg_text, send_voice, pic_path) if chat_type == 'group' else send_message(
         uid, msg_text, send_voice, pic_path)
 

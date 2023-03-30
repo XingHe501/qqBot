@@ -1,4 +1,4 @@
-from util.logs import create_logger
+from util.logs import logger
 import traceback
 import asyncio
 from EdgeGPT import ConversationStyle, Chatbot
@@ -14,7 +14,6 @@ class NewBing:
         """
         self.session = session
         self.bot: Chatbot = session['bot']  # ChatBot
-        self.logger = create_logger()
 
     # 重置会话
     def reset_chat(self):
@@ -22,9 +21,9 @@ class NewBing:
 
     def chat(self, msg: str):
         try:
-            self.logger.info(f"问: {msg}")
+            logger.info(f"问: {msg}")
             replay = asyncio.run(self.__ask_newbing(msg))
-            self.logger.info(f"New Bing 返回: {replay}")
+            logger.info(f"New Bing 返回: {replay}")
             return replay
         except Exception as e:
             return self.__up_log(e)
@@ -39,15 +38,15 @@ class NewBing:
             conversation_style = style_map.get(
                 config.NEW_BING.CONVERSATION_STYLE, ConversationStyle.precise)
             obj = await self.bot.ask(prompt=msg, conversation_style=conversation_style)
-            self.logger.info(f"NewBing 接口返回:{obj} ")
+            logger.info(f"NewBing 接口返回:{obj} ")
             return obj["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"]
         except Exception as e:
             return self.__up_log(e)
 
     # 上报日志
     def __up_log(self, e: Exception):
-        self.logger.error(f"New Bing接口报错: {str(e)}")
-        self.logger.error(f"traceback: {traceback.format_exc()}")
+        logger.error(f"New Bing接口报错: {str(e)}")
+        logger.error(f"traceback: {traceback.format_exc()}")
         return "New Bing接口报错: " + str(e)
 
 

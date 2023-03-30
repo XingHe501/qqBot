@@ -1,5 +1,4 @@
-
-from util.logs import create_logger
+from util.logs import logger
 import sys
 import requests
 import openai
@@ -29,14 +28,13 @@ class ChatGPT:
         session: {'id': str, 'msg': list, 'send_voice': bool, 'new_bing': bool}
         """
         self.session = session
-        self.logger = create_logger()
 
     # 重置会话，但是保留人格
     def reset_chat(self):
        del self.session['msg'][1:len(self.session['msg'])]
 
     # 聊天 
-    def chat(self, msg: str):
+    async def chat(self, msg: str):
         msg = msg.strip()
         try:
             if msg == '查询余额':
@@ -46,7 +44,7 @@ class ChatGPT:
                 return text
             if msg.startswith('/img'):
                 pic_path = self.generate_img(msg.replace('/img', ''))
-                self.logger.info(f'开始直接生成图像: {pic_path}')
+                logger.info(f'开始直接生成图像: {pic_path}')
                 return "![](" + pic_path + ")"
 
             # 设置本次对话内容
@@ -59,13 +57,13 @@ class ChatGPT:
                 # 当超过记忆保存最大量时，清理一条
                 del self.session['msg'][2:3]
             # 与ChatGPT交互获得对话内容
-            message = self.__asking_gpt()
+            message = await self.__asking_gpt()
             # 记录上下文
             self.session['msg'].append({"role": "assistant", "content": message})
-            self.logger.info(f"ChatGPT返回内容: {message}")
+            logger.info(f"ChatGPT返回内容: {message}")
             return message
         except Exception as error:
-            self.__up_log(error)
+            return self.__up_log(error)
 
     # 使用openai生成图片
     def generate_img(self, desc: str) -> str:
@@ -76,7 +74,7 @@ class ChatGPT:
             size=config.OPENAI.IMG_SIZE
         )
         image_url = response['data'][0]['url']
-        self.logger.info(f"图像已生成：{image_url}")
+        logger.info(f"图像已生成：{image_url}")
         return image_url
 
     # 计算消息使用的tokens数量
@@ -103,11 +101,11 @@ class ChatGPT:
         res = requests.get(CREDIT_GRANTS_URL, headers={
             "Authorization": f"Bearer " + config.OPENAI.get_curren_key(index)
         }, timeout=60).json()
-        self.logger.info(f"credit summary: {res}")
+        logger.info(f"credit summary: {res}")
         return res.get('total_available', None) or res.get('error').get('message')
 
     # 向openai的api发送请求
-    def __asking_gpt(self):
+    async def __asking_gpt(self):
         max_length = len(config.OPENAI.API_KEY) - 1
         try:
             if not config.OPENAI.API_KEY:
@@ -132,25 +130,25 @@ class ChatGPT:
         if "Rate limit reached" in str(error) and config.OPENAI.CURRENT_KEY_INDEX < len(config.OPENAI.API_KEY) - 1:
             # 切换key
             config.OPENAI.add_key_index()
-            self.logger.error(
+            logger.error(
                 f"速率限制，尝试切换key：{config.OPENAI.get_curren_key()}")
             return self.__asking_gpt()
         elif "Your access was terminated" in str(error) and config.OPENAI.CURRENT_KEY_INDEX < len(config.OPENAI.API_KEY) - 1:
-            self.logger.error(
+            logger.error(
                 f"请及时确认该Key: {config.OPENAI.get_curren_key()}是否正常，若异常，请移除")
             # 切换key
             config.OPENAI.add_key_index()
-            self.logger.error(
+            logger.error(
                 f"访问被阻止，尝试切换key：{config.OPENAI.get_curren_key()}")
             return self.__asking_gpt()
         else:
-            self.logger.error(f'openai 接口报错: {error}')
+            logger.error(f'openai 接口报错: {error}')
             return str(error)
 
     # 上报日志
     def __up_log(self, e: Exception):
-        self.logger.error(f"GPT接口报错: {str(e)}")
-        self.logger.error(f"traceback: {traceback.format_exc()}")
+        logger.error(f"GPT接口报错: {str(e)}")
+        logger.error(f"traceback: {traceback.format_exc()}")
         return "GPT接口报错: " + str(e)
 
 
