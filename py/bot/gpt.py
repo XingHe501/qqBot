@@ -37,10 +37,11 @@ class ChatGPT:
 
     # 聊天 
     def chat(self, msg: str):
+        msg = msg.strip()
         try:
             if msg == '查询余额':
                 balances = [
-                    f"Key_{i+1} 余额: {round(self.__get_credit_summary(i), 2)}美元" for i in range(len(config.OPENAI.API_KEY))]
+                    f"Key_{i+1} 余额($): {self.__get_credit_summary(i)}美元" for i in range(len(config.OPENAI.API_KEY))]
                 text = "\n".join(balances)
                 return text
             if msg.startswith('/img'):
@@ -103,7 +104,7 @@ class ChatGPT:
             "Authorization": f"Bearer " + config.OPENAI.get_curren_key(index)
         }, timeout=60).json()
         self.logger.info(f"credit summary: {res}")
-        return res['total_available'] if index else res
+        return res.get('total_available', None) or res.get('error').get('message')
 
     # 向openai的api发送请求
     def __asking_gpt(self):
