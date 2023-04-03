@@ -10,6 +10,7 @@ class OPENAI:
 		self.API_KEY: list = config['api_key']
 		self.IMG_SIZE: str = config['img_size']
 		self.API_BASE: str = config['api_base']
+		self.CREDIT_GRANTS: str = config['credit_grants']
 		self.CURRENT_KEY_INDEX:int = 0
 
 	def get_curren_key(self, index:int = None):

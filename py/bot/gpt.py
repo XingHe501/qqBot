@@ -16,8 +16,6 @@ session_config = {
     'send_voice': False,
     'new_bing': False
 }
-# 查询账单url
-CREDIT_GRANTS_URL = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
 # 当前API Key的索引
 CURRENT_KEY_INDEX = 0
 
@@ -98,7 +96,7 @@ class ChatGPT:
 
     # 查询余额
     def __get_credit_summary(self, index=None):
-        res = requests.get(CREDIT_GRANTS_URL, headers={
+        res = requests.get(config.OPENAI.CREDIT_GRANTS, headers={
             "Authorization": f"Bearer " + config.OPENAI.get_curren_key(index)
         }, timeout=60).json()
         logger.info(f"credit summary: {res}")

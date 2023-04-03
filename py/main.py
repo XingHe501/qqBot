@@ -104,7 +104,7 @@ def chatapi():
 # 获取账号余额接口
 @server.route('/credit_summary', methods=["GET"])
 def credit_summary():
-    url = "https://chat-gpt.aurorax.cloud/dashboard/billing/credit_grants"
+    url = config.OPENAI.CREDIT_GRANTS
     print(config.OPENAI.get_curren_key())
     res = requests.get(url, headers={
         "Authorization": f"Bearer " + config.OPENAI.get_curren_key()

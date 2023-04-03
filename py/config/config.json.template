@@ -4,7 +4,9 @@
             "openai的API key"
         ],
         "img_size": "1024x1024",
-        "api_base": "https://chat-gpt.aurorax.cloud/v1"
+        "api_base": "https://api.openai.com/v1",
+         "credit_grants": "https://api.openai.com/dashboard/billing/credit_grants",
+         "api_base_bp": "https://gpt.lucent.blog"
     },
     "chatgpt": {
         "model": "gpt-3.5-turbo",
