@@ -97,13 +97,13 @@ class ChatGPT:
 
     # 查询余额
     def __get_credit_summary(self, index=None):
-        url = config.OPENAI.CREDIT_GRANTS,
-        api_key = config.OPENAI.get_curren_key(index),
+        url = config.OPENAI.CREDIT_GRANTS
+        api_key = config.OPENAI.get_curren_key(index)
         headers = {
             "Authorization": "Bearer " + api_key,
             "Content-Type": "application/json"
         }
-        res = requests.get(config.OPENAI.CREDIT_GRANTS, headers=headers, timeout=60).json()
+        res = requests.get(url=url, headers=headers, timeout=60).json()
         logger.info(f"credit summary: {res}")
         return res.get('total_available', None) or res.get('error').get('message')
 

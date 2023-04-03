@@ -11,6 +11,7 @@ class OPENAI:
 		self.IMG_SIZE: str = config['img_size']
 		self.API_BASE: str = config['api_base']
 		self.CREDIT_GRANTS: str = config['credit_grants']
+		self.API_BASE_BP: str = config['api_base_bp']
 		self.CURRENT_KEY_INDEX:int = 0
 
 	def get_curren_key(self, index:int = None):

@@ -104,7 +104,8 @@ def chatapi():
 # 获取账号余额接口
 @server.route('/credit_summary', methods=["GET"])
 def credit_summary():
-    return get_chat_session(__name__).request_chatgpt("查询余额")
+    chatSession = get_chat_session(__name__)
+    return asyncio.run(chatSession.request("查询余额"))
 
 
 # qq消息上报接口，qq机器人监听到的消息内容将被上报到这里
