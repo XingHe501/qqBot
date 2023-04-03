@@ -104,12 +104,7 @@ def chatapi():
 # 获取账号余额接口
 @server.route('/credit_summary', methods=["GET"])
 def credit_summary():
-    url = config.OPENAI.CREDIT_GRANTS
-    print(config.OPENAI.get_curren_key())
-    res = requests.get(url, headers={
-        "Authorization": f"Bearer " + config.OPENAI.get_curren_key()
-    }, timeout=60).json()
-    return res
+    return get_chat_session(__name__).request_chatgpt("查询余额")
 
 
 # qq消息上报接口，qq机器人监听到的消息内容将被上报到这里
@@ -303,4 +298,5 @@ def sd_img(msg):
 
 
 if __name__ == '__main__':
+    get_chat_session(__name__)
     server.run(port=5701, host='0.0.0.0', use_reloader=False)

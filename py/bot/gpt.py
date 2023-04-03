@@ -29,9 +29,9 @@ class ChatGPT:
 
     # 重置会话，但是保留人格
     def reset_chat(self):
-       del self.session['msg'][1:len(self.session['msg'])]
+        del self.session['msg'][1:len(self.session['msg'])]
 
-    # 聊天 
+    # 聊天
     async def chat(self, msg: str):
         msg = msg.strip()
         try:
@@ -57,7 +57,8 @@ class ChatGPT:
             # 与ChatGPT交互获得对话内容
             message = await self.__asking_gpt()
             # 记录上下文
-            self.session['msg'].append({"role": "assistant", "content": message})
+            self.session['msg'].append(
+                {"role": "assistant", "content": message})
             logger.info(f"ChatGPT返回内容: {message}")
             return message
         except Exception as error:
@@ -96,9 +97,13 @@ class ChatGPT:
 
     # 查询余额
     def __get_credit_summary(self, index=None):
-        res = requests.get(config.OPENAI.CREDIT_GRANTS, headers={
-            "Authorization": f"Bearer " + config.OPENAI.get_curren_key(index)
-        }, timeout=60).json()
+        url = config.OPENAI.CREDIT_GRANTS,
+        api_key = config.OPENAI.get_curren_key(index),
+        headers = {
+            "Authorization": "Bearer " + api_key,
+            "Content-Type": "application/json"
+        }
+        res = requests.get(config.OPENAI.CREDIT_GRANTS, headers=headers, timeout=60).json()
         logger.info(f"credit summary: {res}")
         return res.get('total_available', None) or res.get('error').get('message')
 
@@ -160,6 +165,8 @@ def create_chatgpt_instance(session_id: str) -> ChatGPT:
     return ChatGPT(session)
 
 # 获取北京时间
+
+
 def get_bj_time():
     utc_now = datetime.utcnow().replace(tzinfo=timezone.utc)
     SHA_TZ = timezone(
